@@ -1,0 +1,456 @@
+console.log("main js was loaded");
+
+function loadCss(url) {
+    var link = document.createElement("link");
+    link.type = "text/css";
+    link.rel = "stylesheet";
+    link.href = url;
+    document.getElementsByTagName("head")[0].appendChild(link);
+}
+
+function isNumeric(n) {
+    return !isNaN(parseFloat(n)) && isFinite(n);
+}
+
+function loadJs(url) {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.href = url;
+    document.getElementsByTagName("head")[0].appendChild(script);
+}
+function restoreSpecialChars(string) {
+    //string = string.replace(/[\r\n]/g, '<br/>');
+    string = string.replace(/&amp;/g, '&')
+        .replace(/&gt;/g, '>')
+        .replace(/&lt;/g, '<')
+        .replace(/&quot;/g, '"')
+        .replace(/&#039;/g, "'")
+        .trim();
+    return string;
+}
+function replaceHtmlCodesWithEmojis(inputString) {
+    var outputString = inputString.replace(/&#(\d+);/g, function(match, codePoint) {
+        return String.fromCodePoint(codePoint);
+    });
+    return outputString;
+}
+
+function decodeHtmlspecialChars(text) {
+    var map = {
+        '&amp;': '&',
+        '&#038;': "&",
+        '&lt;': '<',
+        '&gt;': '>',
+        '&quot;': '"',
+        '&#039;': "'",
+        '&#8217;': "’",
+        '&#8216;': "‘",
+        '&#8211;': "–",
+        '&#8212;': "—",
+        '&#8230;': "…",
+        '&#8221;': '”'
+    };
+
+    return text.replace(/\&[\w\d\#]{2,5}\;/g, function(m) { return map[m]; });
+}
+
+require.config({
+    paths: {
+        "jquery": "../../style/js/jquery-1.11.3.min",
+        "jquery-migrate": "../../includes/js/jquery-migrate-1.2.1.min",
+        "miltilink":"../../includes/js/multilink.js?v=1.01",
+        "loadmore":"../../includes/js/load-more.js?v=1.01",
+        "lazyload": "../../js/jquery.lazyload.min",
+        "uikit": "../../js/uikit.min",
+        "uikiticons": "../../js/uikit-icons.min",
+        "mainMenu": "../../js/main_menu_new",
+        "cookie": "../../includes/js/js.cookie.min",
+        "loadFooter": "load-footer",
+        "slickForms": "jquery.slickforms_amd",
+        "stickyContent": "sticky-content",
+        "youtubeVideo": "youtube-video-preview",
+        "goToLink": "go-to-link",
+        "scrollToTop": "scroll-to-top",
+        "coupons": "coupons",
+        "twentyTwenty": "../../includes/js/twentytwenty/js/jquery.comb.twentytwenty",
+        "combinedHeader": "../../js/combined-header.min",
+        "combinedFooter": "../../js/combined-footer.min",
+        // New Presets Logic Block
+        "mbExtruder": "/includes/js/jquery.mb.extruder/inc/mbExtruder",
+        "flipText": "/includes/js/jquery.mb.extruder/inc/jquery.mb.flipText",
+        "darkTooltip": "../../js/darktooltip",
+        "rightTab": "right-tab",
+        "detectBrowser": "/js/detect-browser",
+        "currentDevice": "/js/current-device.min",
+        "amazonPricesGetter" : "amazon-prices-getter",
+        //'recaptcha': '//www.google.com/recaptcha/api.js?onload=newRecaptchaLoadedCallback&render=explicit&hl=en'
+    },
+    shim: {
+        'jquery-migrate': {deps: ['jquery'], exports: 'jQuery'},
+        'foo': ['jquery'],
+        // 'slickForms': {deps: ['jquery'],  exports: 'slickForms' }
+    }
+});
+
+require(["jquery-migrate"], function ($) {
+
+        require(["miltilink"], function () {
+            console.log("RequireJS | Miltilinks loaded and applied");
+            $('a[data-json-urls]').unbind().on("click", openLinksByShortCode);
+        });
+        require(["loadmore"], function () {
+            console.log("RequireJS | Load More");
+        });
+
+        // Load Lazyload
+        require(["lazyload"], function () {
+            console.log("RequireJS | Lazyload");
+            $('.lazy, img.lz-img').lazyload();
+        });
+
+        // Load UIkit
+        require(["uikit"], function (UIkit) {
+            console.log("RequireJS | Uikit");
+
+            $("[class*='slider_']").each(function(){
+                let classes = $(this).attr('class');
+                let match =  classes.match(/slider_(.*\d)/gm);
+                //console.log(match);
+                if(match && match.length > 0){
+                    UIkit.util.on("." + match[0], "itemshown", function(e) {
+                        let _this = $(this);
+                        //console.log(_this);
+                        //console.log(this);
+                        var sliderItems = _this.find('.uk-slider-items').children().length;
+                        var sliderItem = e.detail[0].index;
+                        // console.log(_this.find('.uk-slider-items').children().length);
+                        // console.log(e.detail[0].index);
+                        //console.log(sliderItems,sliderItem);
+                        //var activeElText = _this.find(".tm-blog-slider-counter").text();
+                        setTimeout(function(){
+                            _this.find(".counter-block").text((Number(sliderItem) + 1) + '/' + sliderItems);
+                            $(window).trigger('resize');
+
+                        },80);
+                        //console.log('click');
+                    });
+                }
+            });
+
+            setTimeout(function(){
+                $('[data-img-max-width][data-img-max-height]').each(function(){
+
+                    let thisHeight = Number($(this).data('img-max-height'));
+                    let thisWidth = Number($(this).data('img-max-width'));
+                    let width = Number($(this).width());
+
+
+                    let maxHeigth = 0;
+                    $(this).find('img').each(function(){
+                        var h = $(this).height();
+       ;
+                        if (h > maxHeigth) {
+                            maxHeigth = h;
+                        }
+                    });
+                    if (maxHeigth) {
+                        $(this).css({"height":maxHeigth+"px"});
+                    }
+
+                    if( thisHeight  && maxHeigth && thisWidth && width && thisHeight > 0 && maxHeigth > 0 && thisWidth > 0 && width > 0){
+                        $(this).css({"height":maxHeigth + "px"}).height(maxHeigth);
+                    }
+                });
+            }, 100);
+
+            // Coupons
+            if($( ".tm-coupons-grid-item" ).length){
+                require(["coupons"], function () {
+                    console.log("RequireJS | Coupons");
+                });
+            }
+
+
+            UIkit.scrollspy("#colophon", function () {
+                UIkit.util.on('#colophon', 'inview', function () {
+
+                    console.log("footer in view");
+
+                    require(["slickForms"], function () {
+                        console.log("RequireJS | Load footer");
+
+                        function loadFooter(){
+                            var myTemplate = document.getElementById('footer-template'),
+                                normalContent = document.getElementById('footer-div'),
+                                clonedTemplate = myTemplate.content.cloneNode(true);
+                            normalContent.appendChild(clonedTemplate);
+                            $('.cusform').dcSlickForms();
+                            //console.log("slickforms");
+                            window.onscroll = null;
+                        }
+
+                        if (document.createElement("template").content) {
+                            loadFooter();
+                        }
+
+                    });
+
+                });
+            });
+            $('[data-modal-type="review"][data-img-id][data-review-id]').on('click', function(){
+                let dataPost = {
+                    a_action: 'get-review-slider',
+                    type: 'review',
+                    img_id: $(this).data('img-id'),
+                    review_id: $(this).data('review-id'),
+                    device: $(this).data('device'),
+                };
+                $('[id^="modal-sliderreview_"]').remove();
+                //console.log(dataPost);
+                $.ajax({
+                    url: '/blog/ajax/ajax_review.php',
+                    type: 'post',
+                    data: dataPost,
+
+                    success: function (data) {
+                        //console.log(data);
+                        let response = JSON.parse(data);
+                        if('status' in response && 'slider' in response){
+                            if(response.slider){
+                                response.slider = replaceHtmlCodesWithEmojis(restoreSpecialChars(response.slider));
+                            }
+                            $('body').append(decodeHtmlspecialChars(response.slider));
+
+                            setTimeout(function(){
+                                if($("#modal-" + dataPost.review_id).length > 0) {
+                                    UIkit.modal($("#modal-" + dataPost.review_id)).show();
+                                    //console.log(dataPost.img_id);
+                                    if(!isNumeric(dataPost.img_id)) {
+                                        dataPost.img_id = 1;
+                                    }
+                                    UIkit.slider('[class="uk-slider"]').show(Number(dataPost.img_id) - 1);
+                                    $(".lazy, img.lz-img").lazyload();
+                                    UIkit.util.on('.' + dataPost.review_id, "itemshown", function() {
+                                        var activeElText = $(this).find(".uk-active[data-slide-counter]").data('slide-counter');
+                                        $(this).find(".counter-block span").text(activeElText);
+                                    });
+                                } else {
+                                    console.log($("#modal-" + dataPost.review_id).length);
+                                }
+                            }, 250);
+                        }
+                    }
+                });
+
+            });
+
+        });
+
+        // Load UIkit Icons
+        require(["uikit", "uikiticons"], function (UIkit, icons) {
+            console.log("RequireJS | Uikit icons");
+            icons(UIkit);
+        });
+
+        // Load Cookie
+        require(["uikit", "cookie"], function (UIkit, Cookies) {
+            function show_bf_modal() {
+                if (Cookies.get('bf_modal') == null) {
+                    UIkit.modal("#bf-modal").show();
+                    Cookies.set('bf_modal');
+                }
+            }
+
+            setTimeout(function () {
+                $.when(
+                    show_bf_modal(),
+                    $.Deferred(function (deferred) {
+                        $(deferred.resolve);
+                    })
+                ).done(function () {
+
+                });
+            }, 10000);
+        });
+
+        $("#main-menu").mouseover(function () {
+            require(["mainMenu"], function () {
+                console.log("RequireJS | Load menu js on mouseover");
+            });
+            $("#main-menu").unbind();
+        });
+
+        var clicked = 0;
+
+        $(".show-menu-btn").on("click", function () {
+            require(["mainMenu"], function () {
+                if (clicked === 0){
+                    $(".show-menu-btn").trigger('click');
+                    clicked = 1;
+                    console.log("RequireJS | Load menu js on click");
+                }
+            });
+        });
+
+        if($( ".tm-modal-youtube" ).length){
+            require(["youtubeVideo"], function () {
+                loadCss("css/require/youtube-video-preview.min.css");
+                console.log("RequireJS | Youtube video");
+            });
+        }
+
+        if($( ".am-price" ).length){
+            require(["amazon-prices-getter"], function () {
+                console.log("RequireJS | Load amazon prices");
+            });
+        }
+
+        require(["twentyTwenty"], function () {
+            loadCss("css/require/2020.min.css");
+            setTimeout(function(){
+                $( ".ttcontainer" ).twentytwenty();
+            },200);
+
+        });
+
+        window.twentyVisibilityChecker = [];
+        $(window).on('resize scroll', function() {
+            $(".ttcontainer").each(function (index) {
+                //console.log('outer','visible', index);
+                if($.isFunction($.fn.isInViewport) ){
+                    if ($(this).isInViewport() && twentyVisibilityChecker.indexOf(index) < 0) {
+                        //console.log('inner','visible', index);
+                        //$( ".ttcontainer" ).twentytwenty();
+                        $(window).trigger("resize.twentytwenty");
+                        window.twentyVisibilityChecker.push(index);
+                    }
+                } else {
+                    $(window).trigger("resize.twentytwenty");
+                }
+
+            });
+        });
+
+        if($( ".ttcontainer" ).length){
+            $(".ttcontainer img").each(function () {
+                if (!$(this).hasClass("lazy") && !$(this).hasClass("lz-img") && !$(this).hasClass("no-lazy")) {
+                    $(this).addClass("lazy lz-img");
+                }
+            });
+
+        }
+
+        // if($( ".tm-coupons-grid" ).length){
+        //     loadCss("css/require/coupons.min.css");
+        //     require(["coupons"], function () {
+        //         console.log("RequireJS | Сoupons");
+        //     });
+        // }
+
+        // Hide scroll to top on load
+        $(".fipharea-of-button-up").hide();
+        if($( ".contents_list" ).length){
+            require(["stickyContent"], function () {
+                //console.log("Load right menu on scroll");
+            });
+        }
+        $(window).on("scroll", function () {
+            require(["mainMenu"], function () {
+                //console.log("Load menu js on scroll");
+            });
+
+            if($( ".fipharea-of-button-up" ).length){
+                require(["scrollToTop"], function () {
+                    //console.log("Load right menu on scroll");
+                });
+            }
+        });
+
+        if($( "a[href*=#]:not([href=#])" ).length){
+            require(["goToLink"], function () {
+                //console.log("Load right menu on scroll");
+            });
+        }
+
+        if($( ".author-form" ).length){
+            require(["slickForms"], function () {
+                console.log("slickform for author");
+                $('.author-form').dcSlickForms();
+            });
+        }
+
+        if($( ".tm-download" ).length){
+            loadCss("css/require/right-popup.min.css?v=1");
+            require(["mbExtruder", "rightTab", "flipText", "darkTooltip", "slickForms", "newRecaptcha", "Recaptcha3", "detectBrowser", "currentDevice"], function (newRecaptcha,Recaptcha3) {
+                console.log("RequireJS | New Presets Logic Block");
+                $('.popupok').click(function(){
+                    setTimeout( function(){
+                        $('.popupok').hide();
+                    }, 500);
+                });
+            });
+        }
+
+});
+
+var requireConfig = {
+    paths: {
+        'recaptcha': '//www.google.com/recaptcha/api.js?onload=onloadCallbackFooter&render=explicit&hl=en',
+        'recaptchaAuthorListing': '//www.google.com/recaptcha/api.js?onload=onloadCallbackAuthorListing&render=explicit&hl=en',
+        'newRecaptcha': '//www.google.com/recaptcha/api.js?onload=newRecaptchaLoadedCallback&render=explicit&hl=en',
+        'Recaptcha3': 'https://www.google.com/recaptcha/api.js?render='+GOOGLE_CAPTCHA_SITE+''
+    }
+};
+
+function render(id) {
+    //console.log('[info] - render');
+    // recaptchaClientId = grecaptcha.render(id, {
+    //     'sitekey': RE_CAPTCHA_SITE_KEY,
+    //     'theme': 'dark'
+    // });
+
+    grecaptcha.ready(function() {
+        // do request for recaptcha token
+        // response is promise with passed token
+        grecaptcha.execute(GOOGLE_CAPTCHA_SITE, {action:'validate_captcha'})
+            .then(function(token) {
+                // add token value to form
+                let _recaptcha = document.getElementById('g-recaptcha-response');
+                if(_recaptcha != null){
+                    document.getElementById('g-recaptcha-response').value = token;
+                    console.log(document.getElementById('g-recaptcha-response').value);
+                    console.log('Google recaptcha error!');
+                }
+            });
+    });
+};
+
+window.renderRecaptcha = render;
+
+var onloadCallbackFooter = function() {
+    //console.log('[info] - onLoadCallback');
+    if (!document.getElementById('footer-recaptcha')) {
+        return;
+    }
+    window.renderRecaptcha('footer-recaptcha');
+};
+
+var onloadCallbackAuthorListing = function() {
+    //console.log('[info] - onLoadCallback');
+    if (!document.getElementById('author-listing-recaptcha')) {
+        return;
+    }
+    window.renderRecaptcha('author-listing-recaptcha');
+};
+
+requirejs.config(requireConfig);
+
+//require(['recaptcha'], function(recaptcha) { });
+
+
+
+
+
+
+
+
